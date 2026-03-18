@@ -56,8 +56,16 @@ export function generateSimulatedEmails(clients: Client[]): SimulatedEmail[] {
   for (const client of clients) {
     const rand = seededRandom(client.code);
 
-    if (client.reconfirmationEmailSent) {
-      const sentDate = client.reconfirmationEmailSent;
+    if (client.reconfirmationEmailSent && client.reconfirmationEmailSent !== 'No') {
+      // Derive a real date: use the value if it's a date, otherwise estimate from assignDate/dueDate
+      const sentDate = isValidDate(client.reconfirmationEmailSent)
+        ? client.reconfirmationEmailSent
+        : client.assignDate && isValidDate(client.assignDate)
+          ? addDays(client.assignDate, 3)
+          : client.dueDate && isValidDate(client.dueDate)
+            ? addDays(client.dueDate, -30)
+            : null;
+      if (!sentDate) continue;
       emails.push({
         id: `out-reconf-${client.code}`,
         clientCode: client.code,
@@ -92,7 +100,7 @@ export function generateSimulatedEmails(clients: Client[]): SimulatedEmail[] {
       }
     }
 
-    if (client.reminderPlus1w) {
+    if (client.reminderPlus1w && isValidDate(client.reminderPlus1w)) {
       emails.push({
         id: `out-rem-${client.code}`,
         clientCode: client.code,
@@ -138,15 +146,25 @@ export function generateActivities(clients: Client[]): Activity[] {
   for (const client of clients) {
     const rand = seededRandom(client.code + 'act');
 
-    if (client.reconfirmationEmailSent) {
-      activities.push({
-        id: `act-email-${client.code}`,
-        type: 'email_sent',
-        description: `Re-confirmation email sent to ${client.code}`,
-        clientCode: client.code,
-        timestamp: client.reconfirmationEmailSent,
-        user: pick(teamMembers, rand),
-      });
+    if (client.reconfirmationEmailSent && client.reconfirmationEmailSent !== 'No') {
+      // reconfirmationEmailSent may be "Yes" or a date string; derive a timestamp
+      const emailTimestamp = isValidDate(client.reconfirmationEmailSent)
+        ? client.reconfirmationEmailSent
+        : client.assignDate && isValidDate(client.assignDate)
+          ? addDays(client.assignDate, 3)
+          : client.prStartDate && isValidDate(client.prStartDate)
+            ? client.prStartDate
+            : null;
+      if (emailTimestamp) {
+        activities.push({
+          id: `act-email-${client.code}`,
+          type: 'email_sent',
+          description: `Re-confirmation email sent to ${client.code}`,
+          clientCode: client.code,
+          timestamp: emailTimestamp,
+          user: pick(teamMembers, rand),
+        });
+      }
     }
 
     if (client.assignDate && client.prTeamMember) {

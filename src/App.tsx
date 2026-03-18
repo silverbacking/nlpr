@@ -14,7 +14,7 @@ import AdminPanel from './pages/AdminPanel';
 
 const STORAGE_KEY = 'nlpr_clients';
 
-function loadClients(): Client[] {
+function loadClientsLocal(): Client[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
@@ -22,14 +22,38 @@ function loadClients(): Client[] {
   return [];
 }
 
-function saveClients(clients: Client[]) {
+function saveClientsLocal(clients: Client[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
+}
+
+async function loadClientsFromServer(): Promise<{ clients: Client[]; name: string | null }> {
+  try {
+    const res = await fetch('/api/clients');
+    if (!res.ok) return { clients: [], name: null };
+    const data = await res.json();
+    return { clients: data.clients || [], name: data.name || null };
+  } catch {
+    return { clients: [], name: null };
+  }
+}
+
+async function saveClientsToServer(clients: Client[], name: string, uploadedBy: string): Promise<void> {
+  try {
+    await fetch('/api/clients', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clients, name, uploadedBy }),
+    });
+  } catch {
+    // Fallback: already saved to localStorage
+  }
 }
 
 export default function App() {
   const [auth, setAuth] = useState<AuthState>(getStoredAuth);
-  const [clients, setClients] = useState<Client[]>(loadClients);
+  const [clients, setClients] = useState<Client[]>(loadClientsLocal);
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
+  const [dataLoading, setDataLoading] = useState(false);
   const navigate = useNavigate();
 
   const emails = useMemo<SimulatedEmail[]>(() => {
@@ -37,8 +61,21 @@ export default function App() {
     return generateSimulatedEmails(clients);
   }, [clients]);
 
+  // On login, try to load clients from server if local is empty
   useEffect(() => {
-    if (clients.length > 0) saveClients(clients);
+    if (auth.user && clients.length === 0) {
+      setDataLoading(true);
+      loadClientsFromServer().then(({ clients: serverClients }) => {
+        if (serverClients.length > 0) {
+          setClients(serverClients);
+          saveClientsLocal(serverClients);
+        }
+      }).finally(() => setDataLoading(false));
+    }
+  }, [auth.user]);
+
+  useEffect(() => {
+    if (clients.length > 0) saveClientsLocal(clients);
   }, [clients]);
 
   const handleLogin = (newAuth: AuthState) => {
@@ -50,9 +87,13 @@ export default function App() {
     setAuth({ user: null, token: null });
   };
 
-  const handleDataLoaded = (newClients: Client[]) => {
+  const handleDataLoaded = (newClients: Client[], fileName?: string) => {
     setClients(newClients);
     setSelectedClient(null);
+    // Save to server in background
+    const name = fileName || 'Upload';
+    const uploadedBy = auth.user?.email || 'unknown';
+    saveClientsToServer(newClients, name, uploadedBy);
   };
 
   const handleSelectClient = (code: string) => {
@@ -76,6 +117,7 @@ export default function App() {
       onLogout={handleLogout}
       clients={clients}
       onDataLoaded={handleDataLoaded}
+      dataLoading={dataLoading}
     >
       {selected ? (
         <ClientDetail

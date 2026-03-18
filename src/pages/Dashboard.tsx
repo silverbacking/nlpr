@@ -138,7 +138,8 @@ export default function Dashboard({ clients }: { clients: Client[] }) {
         {/* Donut Chart - Clients by Regulation */}
         <div className="bg-navy-800 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Clients by Regulation</h3>
-          <ResponsiveContainer width="100%" height={280}>
+          <div style={{ width: '100%', height: 280 }}>
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={regulationData}
@@ -173,12 +174,14 @@ export default function Dashboard({ clients }: { clients: Client[] }) {
               />
             </PieChart>
           </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Bar Chart - Risk Rating Distribution */}
         <div className="bg-navy-800 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Risk Rating Distribution</h3>
-          <ResponsiveContainer width="100%" height={280}>
+          <div style={{ width: '100%', height: 280 }}>
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart data={riskData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#263c6b" />
               <XAxis dataKey="name" stroke="#9ca3af" />
@@ -201,6 +204,7 @@ export default function Dashboard({ clients }: { clients: Client[] }) {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          </div>
         </div>
       </div>
 

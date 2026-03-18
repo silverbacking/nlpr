@@ -21,7 +21,8 @@ interface LayoutProps {
   user: User;
   onLogout: () => void;
   clients: Client[];
-  onDataLoaded: (clients: Client[]) => void;
+  onDataLoaded: (clients: Client[], fileName?: string) => void;
+  dataLoading?: boolean;
 }
 
 const navItems = [
@@ -31,7 +32,7 @@ const navItems = [
   { to: '/workflow', icon: GitBranch, label: 'PR Workflow' },
 ];
 
-export default function Layout({ children, user, onLogout, clients, onDataLoaded }: LayoutProps) {
+export default function Layout({ children, user, onLogout, clients, onDataLoaded, dataLoading }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
@@ -45,8 +46,8 @@ export default function Layout({ children, user, onLogout, clients, onDataLoaded
     try {
       const buffer = await file.arrayBuffer();
       const parsed = parseClientsSheet(buffer);
-      onDataLoaded(parsed);
-      setUploadSuccess(`✅ Loaded ${parsed.length} clients from "${file.name}"`);
+      onDataLoaded(parsed, file.name);
+      setUploadSuccess(`✅ Loaded ${parsed.length} clients from "${file.name}" — saved to cloud`);
       setTimeout(() => setUploadSuccess(null), 5000);
     } catch (err) {
       alert('Error parsing Excel file. Please ensure it contains a "Clients" sheet.');
