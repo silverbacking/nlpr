@@ -150,6 +150,7 @@ export default function Dashboard({ clients }: { clients: Client[] }) {
                 dataKey="value"
                 nameKey="name"
                 paddingAngle={2}
+                isAnimationActive={false}
               >
                 {regulationData.map((entry) => (
                   <Cell
@@ -194,7 +195,7 @@ export default function Dashboard({ clients }: { clients: Client[] }) {
                   color: '#fff',
                 }}
               />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="value" radius={[4, 4, 0, 0]} isAnimationActive={false}>
                 {riskData.map((entry) => (
                   <Cell
                     key={entry.name}
