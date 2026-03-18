@@ -88,11 +88,9 @@ export default function Login({ onLogin }: { onLogin: (auth: AuthState) => void 
             )}
           </button>
 
-          <div className="mt-6 p-3 rounded-lg bg-navy-900/50 border border-navy-700">
-            <p className="text-xs text-gray-400 font-medium mb-1">Demo credentials:</p>
-            <p className="text-xs text-gray-500">admin@silverbacking.com / admin123</p>
-            <p className="text-xs text-gray-500">reviewer@silverbacking.com / reviewer123</p>
-          </div>
+          <p className="mt-4 text-center text-xs text-gray-600">
+            Contact your administrator for access credentials
+          </p>
         </form>
 
         <p className="text-center text-gray-600 text-xs mt-6">
