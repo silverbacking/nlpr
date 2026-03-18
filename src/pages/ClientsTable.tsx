@@ -50,7 +50,9 @@ function riskBadge(risk: string) {
 
 function isOverdue(dateStr: string | null): boolean {
   if (!dateStr) return false;
-  return new Date(dateStr) < new Date();
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return false;
+  return d < new Date();
 }
 
 export default function ClientsTable({ clients, onSelectClient }: ClientsTableProps) {

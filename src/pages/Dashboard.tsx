@@ -321,9 +321,13 @@ export default function Dashboard({ clients }: { clients: Client[] }) {
                     {activity.description}
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {formatDistanceToNow(new Date(activity.timestamp), {
-                      addSuffix: true,
-                    })}
+                    {(() => {
+                      try {
+                        const d = new Date(activity.timestamp);
+                        if (isNaN(d.getTime())) return activity.timestamp || 'N/A';
+                        return formatDistanceToNow(d, { addSuffix: true });
+                      } catch { return activity.timestamp || 'N/A'; }
+                    })()}
                   </p>
                 </div>
               </div>

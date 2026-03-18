@@ -83,6 +83,7 @@ export default function ClientDetail({ client, onBack, emails }: ClientDetailPro
     client.dueDate &&
     !client.dateReviewComplete &&
     !client.signedOffAndArchivedDate &&
+    !isNaN(new Date(client.dueDate).getTime()) &&
     new Date(client.dueDate) < new Date();
 
   return (

@@ -27,8 +27,15 @@ function pick<T>(arr: T[], rand: () => number): T {
   return arr[Math.floor(rand() * arr.length)];
 }
 
+function isValidDate(dateStr: string | null | undefined): boolean {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  return !isNaN(d.getTime());
+}
+
 function addDays(dateStr: string, days: number): string {
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
   d.setDate(d.getDate() + days);
   return d.toISOString().split('T')[0];
 }
@@ -101,7 +108,7 @@ export function generateSimulatedEmails(clients: Client[]): SimulatedEmail[] {
     }
 
     // Generate additional follow-up for overdue clients
-    if (client.dueDate && !client.dateReviewComplete) {
+    if (client.dueDate && isValidDate(client.dueDate) && !client.dateReviewComplete) {
       const due = new Date(client.dueDate);
       const now = new Date();
       if (due < now) {
@@ -189,7 +196,7 @@ export function computeKPIs(clients: Client[]) {
     totalClients: clients.length,
     delayedPRs: clients.filter((c) => {
       if (!c.dueDate || c.dateReviewComplete || c.signedOffAndArchivedDate) return false;
-      return new Date(c.dueDate) < now;
+      return isValidDate(c.dueDate) && new Date(c.dueDate) < now;
     }).length,
     highRiskClients: clients.filter((c) => c.riskRating === 'High').length,
     prsCompletedThisMonth: clients.filter((c) =>
@@ -213,7 +220,7 @@ export function getAlerts(clients: Client[]) {
   const highRiskNoReview: Client[] = [];
 
   for (const c of clients) {
-    if (!c.dueDate) continue;
+    if (!c.dueDate || !isValidDate(c.dueDate)) continue;
     const due = new Date(c.dueDate);
     const isComplete = c.dateReviewComplete || c.signedOffAndArchivedDate;
 
@@ -226,7 +233,7 @@ export function getAlerts(clients: Client[]) {
     }
 
     if (c.riskRating === 'High' && !isComplete) {
-      const lastReview = c.dateLastReview ? new Date(c.dateLastReview) : null;
+      const lastReview = c.dateLastReview && isValidDate(c.dateLastReview) ? new Date(c.dateLastReview) : null;
       if (!lastReview || lastReview < threeMonthsAgo) {
         highRiskNoReview.push(c);
       }
