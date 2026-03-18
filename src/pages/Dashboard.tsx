@@ -76,6 +76,26 @@ export default function Dashboard({ clients }: { clients: Client[] }) {
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [clients]);
 
+  if (clients.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div className="bg-navy-800 rounded-2xl p-12 border border-navy-700 max-w-lg">
+          <Shield className="w-16 h-16 text-blue-400 mx-auto mb-6" />
+          <h2 className="text-2xl font-bold text-white mb-3">Welcome to NLPR Tracker</h2>
+          <p className="text-gray-400 mb-6">
+            Upload your Periodic Review Excel file to get started. Use the
+            <span className="text-blue-400 font-medium"> Upload Excel </span>
+            button in the sidebar to import your client data.
+          </p>
+          <div className="flex items-center gap-2 text-sm text-gray-500 justify-center">
+            <Clock className="w-4 h-4" />
+            <span>Supports the standard NL PR tracking format</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* KPI Cards Row */}

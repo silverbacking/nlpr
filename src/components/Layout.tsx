@@ -33,17 +33,25 @@ const navItems = [
 
 export default function Layout({ children, user, onLogout, clients, onDataLoaded }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setUploading(true);
+    setUploadSuccess(null);
     try {
       const buffer = await file.arrayBuffer();
       const parsed = parseClientsSheet(buffer);
       onDataLoaded(parsed);
+      setUploadSuccess(`✅ Loaded ${parsed.length} clients from "${file.name}"`);
+      setTimeout(() => setUploadSuccess(null), 5000);
     } catch (err) {
       alert('Error parsing Excel file. Please ensure it contains a "Clients" sheet.');
+    } finally {
+      setUploading(false);
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -116,8 +124,12 @@ export default function Layout({ children, user, onLogout, clients, onDataLoaded
               onClick={() => fileInputRef.current?.click()}
               className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-navy-700 hover:text-white transition"
             >
-              <Upload className="w-4 h-4" />
-              Upload Excel
+              {uploading ? (
+                <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4" />
+              )}
+              {uploading ? 'Loading...' : 'Upload Excel'}
             </button>
             <input
               ref={fileInputRef}
@@ -189,6 +201,19 @@ export default function Layout({ children, user, onLogout, clients, onDataLoaded
           )}
         </main>
       </div>
+
+      {/* Upload success toast */}
+      {uploadSuccess && (
+        <div className="fixed bottom-6 right-6 z-50 bg-green-600/90 backdrop-blur text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-slide-up">
+          <span className="text-sm font-medium">{uploadSuccess}</span>
+          <button
+            onClick={() => setUploadSuccess(null)}
+            className="text-white/70 hover:text-white text-lg leading-none"
+          >
+            ×
+          </button>
+        </div>
+      )}
     </div>
   );
 }
