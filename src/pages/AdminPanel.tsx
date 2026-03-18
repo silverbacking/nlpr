@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { Users, UserPlus, Trash2, ShieldCheck, ShieldOff, Key, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, UserPlus, Trash2, ShieldCheck, ShieldOff, Key, AlertCircle, Loader2 } from 'lucide-react';
 import type { User } from '../types';
 import { getUsers, addUser, deleteUser, toggleUserRole, changeUserPassword } from '../utils/auth';
 
 export default function AdminPanel() {
-  const [users, setUsers] = useState<User[]>(getUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
@@ -15,14 +16,25 @@ export default function AdminPanel() {
   const [changingPassword, setChangingPassword] = useState<number | null>(null);
   const [tempPassword, setTempPassword] = useState('');
 
-  const refresh = () => setUsers(getUsers());
+  const refresh = async () => {
+    try {
+      const u = await getUsers();
+      setUsers(u);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
 
-  const handleAddUser = (e: React.FormEvent) => {
+  useEffect(() => {
+    refresh().finally(() => setLoading(false));
+  }, []);
+
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     try {
-      addUser(newName, newEmail, newPassword, newRole);
-      refresh();
+      await addUser(newName, newEmail, newPassword, newRole);
+      await refresh();
       setNewName('');
       setNewEmail('');
       setNewPassword('');
@@ -32,37 +44,56 @@ export default function AdminPanel() {
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err.message);
+      setTimeout(() => setError(''), 5000);
     }
   };
 
-  const handleToggleRole = (id: number) => {
-    toggleUserRole(id);
-    refresh();
-  };
-
-  const handleDelete = (id: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+  const handleToggleRole = async (id: number, currentRole: string) => {
     try {
-      deleteUser(id);
-      refresh();
+      await toggleUserRole(id, currentRole);
+      await refresh();
     } catch (err: any) {
       setError(err.message);
       setTimeout(() => setError(''), 3000);
     }
   };
 
-  const handleChangePassword = (id: number) => {
+  const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+    try {
+      await deleteUser(id);
+      await refresh();
+    } catch (err: any) {
+      setError(err.message);
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  const handleChangePassword = async (id: number) => {
     if (!tempPassword || tempPassword.length < 4) {
       setError('Password must be at least 4 characters');
       setTimeout(() => setError(''), 3000);
       return;
     }
-    changeUserPassword(id, tempPassword);
-    setChangingPassword(null);
-    setTempPassword('');
-    setSuccess('Password updated');
-    setTimeout(() => setSuccess(''), 3000);
+    try {
+      await changeUserPassword(id, tempPassword);
+      setChangingPassword(null);
+      setTempPassword('');
+      setSuccess('Password updated');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      setError(err.message);
+      setTimeout(() => setError(''), 3000);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -225,7 +256,7 @@ export default function AdminPanel() {
                           <Key className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleToggleRole(user.id)}
+                          onClick={() => handleToggleRole(user.id, user.role)}
                           className="p-1.5 rounded-lg hover:bg-navy-600 text-gray-400 hover:text-blue-400 transition"
                           title={user.role === 'admin' ? 'Remove admin' : 'Make admin'}
                         >

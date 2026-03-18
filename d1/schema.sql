@@ -8,9 +8,5 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Default admin user (password: admin123)
--- The password hash below is SHA-256( "nlpr-salt:" + "admin123" ) encoded as hex.
--- In production, each user gets a unique random salt stored alongside the hash.
--- For the seed we use the app-level salt prefix so the login endpoint can verify it.
---
--- Seed is applied via: wrangler d1 execute nlpr-db --file=./d1/schema.sql
--- Then run the seed separately or use the register endpoint to create the first admin.
+INSERT OR IGNORE INTO users (email, password_hash, name, role)
+VALUES ('admin@silverbacking.com', 'h_admin123_8', 'Admin', 'admin');
